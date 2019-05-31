@@ -1,5 +1,7 @@
 {
   "name": "readFileIonic",
-  "integrations": {},
+  "integrations": {
+    "cordova": {}
+  },
   "type": "ionic-angular"
 }
