@@ -3,8 +3,7 @@ import { NavController, ToastController } from 'ionic-angular';
 import moment from 'moment';
 
 import { File } from '@ionic-native/file';
-
-declare var window;
+import { AndroidPermissions } from '@ionic-native/android-permissions';
 
 @Component({
   selector: 'page-home',
@@ -14,49 +13,34 @@ export class HomePage {
   public content: string;
 
   constructor(public navCtrl: NavController, public file: File, 
-    public toastController: ToastController) { }
+    public toastController: ToastController, public androidPermissions: AndroidPermissions) { }
 
-  read() {
-    var that = this;
-    let beginTimer = moment().valueOf();
-    window.resolveLocalFileSystemURL(this.file.externalRootDirectory + 'Download/', function (dirEntry) {
-      that.getFile(dirEntry, "testIonic.txt", beginTimer);
-    }, function(){ 
-      console.log('Ocorreu um erro') ;
-    });
+  askPermission() {
+    const permission = this.androidPermissions.PERMISSION.WRITE_EXTERNAL_STORAGE;
+    
+    this.androidPermissions.checkPermission(permission).then(
+      result => {
+        if(result.hasPermission)
+          console.log('Has permission');
+        else
+          this.androidPermissions.requestPermission(permission);
+      },
+      err => this.androidPermissions.requestPermission(permission)
+    );
   }
 
-  getFile(dirEntry, fileName, beginTimer) {
-    var that = this;
-
-    // Creates a new file or returns the file if it already exists.
-    dirEntry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
-      that.readFile(fileEntry, beginTimer);
-    }, function() {
-      console.log('onErrorCreateFile');
-    });
-}
-
-  readFile(fileEntry, beginTimer) {
-    var that = this;
-
-    fileEntry.file(function (file) {
-      var reader = new FileReader();
-
-      reader.onloadend = function() {
-          console.log("Successful file read: " + this.result);
-          that.content = this.result.toString();
-      };
-
-      reader.readAsText(file);
-    }, function() {
-      console.log('Erro de leitura do arquivo');
-    });
-    let endTimer = moment().valueOf();
-      const toast = this.toastController.create({
-        message: 'Finished in ' + (endTimer - beginTimer) + 'ms',
-        duration: 200000
-      });
-      toast.present();
+  read = async () => {
+    let path = this.file.externalRootDirectory + 'Download/';
+    // let times = [];
+    
+    for(let n = 0; n < 30; n++) {
+      // let beginTimer = moment().valueOf();
+      let fileName = "file"+ n + ".txt";
+      await this.file.readAsText(path, fileName);
+      // let endTimer = moment().valueOf();
+      // times.push(endTimer - beginTimer);
+    }
+    // await this.file.writeFile(path, "aaTimeReadIonic.csv", "TIMES\n" + times.join("\n"), {replace: true});
+    this.content = 'Finished';
   }
 }
